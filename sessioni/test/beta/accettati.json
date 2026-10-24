@@ -1,4 +1,21 @@
 {
   "$nota": "Difetti noti con issue `beta-tester` aperta: il giudice non li conta. Campi: voce (criterio della sonda), area (o *), dove (pezzo del selettore, facoltativo), issue. Issue chiusa = il difetto torna a contare.",
-  "accettati": []
+  "accettati": [
+    { "voce": "FUORI", "area": "barra", "issue": 550 },
+    { "voce": "TAGLIATO", "area": "barra", "issue": 550 },
+    { "voce": "SPORGE", "area": "barra", "issue": 550 },
+    { "voce": "FUORI", "area": "cornice", "dove": "popover-attivita", "issue": 544 },
+    { "voce": "TAGLIATO", "area": "cornice", "dove": "popover-attivita", "issue": 544 },
+    { "voce": "FUORI", "area": "*", "issue": 577 },
+    { "voce": "TAGLIATO", "area": "*", "issue": 577 },
+    { "voce": "COPERTO", "area": "*", "issue": 577 },
+    { "voce": "SPORGE", "area": "*", "issue": 577 },
+    { "voce": "ESC", "area": "*", "issue": 578 },
+    { "voce": "FUOCO-RITORNO", "area": "*", "issue": 578 },
+    { "voce": "HOVER", "area": "*", "issue": 579 },
+    { "voce": "PREMUTO", "area": "*", "issue": 579 },
+    { "voce": "STATO", "area": "*", "issue": 579 },
+    { "voce": "FOCUS", "area": "*", "issue": 521 },
+    { "voce": "CONSOLE", "area": "friday", "issue": 581 }
+  ]
 }

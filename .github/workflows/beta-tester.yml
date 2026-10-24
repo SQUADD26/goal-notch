@@ -1,0 +1,81 @@
+# Beta tester dell'app Electron (#518): clicca ogni elemento di ogni area sulla matrice completa (tema × misura × dati × testo lungo,
+# più movimento ridotto), fotografa, misura le animazioni e giudica. Rossa su un difetto nuovo (non in sessioni/test/beta/accettati.json
+# con issue aperta) o su un giro senza prove. Foto, video e registri restano come artifact anche quando è rossa.
+# Runner clotch-ci su squaddv2 come prestazioni.yml; una PR da fork gira sulle macchine di GitHub.
+name: beta-tester
+on:
+  pull_request:
+    paths: ['sessioni/src/ui/**', 'sessioni/test/beta/**', '.github/workflows/beta-tester.yml']
+  push:
+    branches: [dev]
+    paths: ['sessioni/src/ui/**', 'sessioni/test/beta/**', '.github/workflows/beta-tester.yml']
+
+concurrency:
+  group: beta-tester-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  checklist:
+    runs-on: ${{ github.event.pull_request.head.repo.full_name != github.repository && github.event_name == 'pull_request' && 'ubuntu-latest' || fromJSON('["self-hosted","clotch-ci"]') }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Schema delle voci (almeno 20 SOV)
+        run: node sessioni/test/beta/controlla-checklist.mjs --min 20
+      - name: Ogni bug beta-tester chiuso ha la sua voce
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE: origin/${{ github.base_ref }}
+        run: node sessioni/test/beta/voce-checklist.mjs
+
+  clicca:
+    runs-on: ${{ github.event.pull_request.head.repo.full_name != github.repository && github.event_name == 'pull_request' && 'ubuntu-latest' || fromJSON('["self-hosted","clotch-ci"]') }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        area: [barra, chat, nuova, friday, impostazioni, cornice]
+    defaults:
+      run:
+        working-directory: sessioni
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: sessioni/package-lock.json
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/electron
+          key: electron-${{ hashFiles('sessioni/package-lock.json') }}
+      - name: Librerie di Electron e xvfb
+        if: runner.environment == 'github-hosted'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb xauth libgtk-3-0t64 libnss3 libgbm1 libasound2t64 libxss1 libxtst6
+        working-directory: .
+      # ffmpeg di Playwright: senza, la registrazione del video blocca la pagina
+      - run: npm ci --no-audit --no-fund && node node_modules/electron/install.js && npx playwright install ffmpeg
+      - run: npm run build && npm run scene
+      - name: Clicca tutto (${{ matrix.area }}, matrice completa)
+        run: node test/beta/clicca.mjs --area ${{ matrix.area }} --matrice --video --out beta-giro
+      - name: Giudica
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node test/beta/giudica.mjs beta-giro
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: beta-tester-${{ matrix.area }}
+          path: |
+            sessioni/beta-giro/**/*.json
+            sessioni/beta-giro/**/*.jpg
+            sessioni/beta-giro/**/*.webm
+          if-no-files-found: warn
+          retention-days: 14

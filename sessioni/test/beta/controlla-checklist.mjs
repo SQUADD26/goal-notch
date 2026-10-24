@@ -6,20 +6,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const dir = fileURLToPath(new URL('./checklist/', import.meta.url));
-const FAMIGLIE = { barra: 'BAR', chat: 'CHAT', nuova: 'NUO', friday: 'FRI', impostazioni: 'IMP', cornice: 'COR', sovrapposti: 'SOV', movimento: 'MOV', campi: 'CAM', 'cerca-richieste': 'CRI', 'cerca-testi': 'CTX', 'cerca-temi': 'CTE', 'cerca-modello-coda': 'CMC', 'cerca-markdown': 'CMD', 'cerca-casella': 'CCA', 'cerca-allegati': 'CAL', 'cerca-pannello': 'CPA', 'cerca-avvio-stati': 'CAS', 'cerca-filtri': 'CFI', 'cerca-ferma-tutto': 'CFT', 'cerca-menu-sessione': 'CMS', 'cerca-nuova-sessione': 'CNS' };
-FAMIGLIE['cerca-intestazione'] = 'CIN';
-FAMIGLIE['cerca-dialoghi'] = 'CDI';
-FAMIGLIE['cerca-account'] = 'CAC';
-FAMIGLIE['cerca-larghezze'] = 'CLA';
+// Il prefisso di una famiglia è quello del primo id del suo file (BAR, SOV, CMD…): un file nuovo non tocca questo script; due file con lo stesso prefisso = errore.
 const GRAVITA = ['bloccante', 'alta', 'media', 'bassa'], PROVA = ['auto', 'occhio', 'fotogrammi'];
-FAMIGLIE['cerca-tastiera'] = 'CTS';
-FAMIGLIE['cerca-icona-viadalmac'] = 'CIV';
-FAMIGLIE['cerca-voce'] = 'CVO';
-FAMIGLIE['ux-mac'] = 'UXM';
-FAMIGLIE['cerca-impostazioni-3'] = 'CI3';
-FAMIGLIE['cerca-impostazioni-2'] = 'CI2';
-FAMIGLIE['cerca-ricerca'] = 'CRS';
-FAMIGLIE['cerca-stati-turno'] = 'CST';
 // parole di gusto: «vedi» dice un sì/no che si osserva, mai un giudizio
 const GUSTO = /\b(bell[oaie]|brutt[oaie]|piacevol\w*|adeguat\w*|sembr\w*|elegant\w*|curat\w*|fluid[oaie]|naturale|intuitiv\w*|ragionevol\w*|opportun\w*|buon[oaie])\b/i;
 const opt = (k) => (process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : undefined);
@@ -32,11 +20,14 @@ if (opt('--prossimo')) {
   console.log(`${pre}-${String(Math.max(0, ...n) + 1).padStart(3, '0')}`);
   process.exit(0);
 }
-const errori = [], visti = new Map(), conto = {};
+const errori = [], visti = new Map(), conto = {}, prefissi = {};
 for (const { f, i, r } of righe) {
-  const posto = `${f}:${i}`, fam = f.replace('.jsonl', ''), pre = FAMIGLIE[fam];
-  if (!pre) { errori.push(`${posto}: famiglia «${fam}» sconosciuta (${Object.keys(FAMIGLIE).join(', ')})`); continue; }
+  const posto = `${f}:${i}`, fam = f.replace('.jsonl', '');
   let v; try { v = JSON.parse(r); } catch { errori.push(`${posto}: JSON non valido`); continue; }
+  const pre = (prefissi[fam] ??= String(v.id ?? '').split('-')[0]);
+  if (!/^[A-Z][A-Z0-9]{2,3}$/.test(pre)) { errori.push(`${posto}: id «${v.id}» senza prefisso di 3-4 lettere maiuscole o cifre (ABC-001)`); continue; }
+  const altro = Object.entries(prefissi).find(([g, p]) => p === pre && g !== fam);
+  if (altro) errori.push(`${posto}: prefisso ${pre} già usato da ${altro[0]}.jsonl`);
   if (!new RegExp(`^${pre}-\\d{3}$`).test(v.id ?? '')) errori.push(`${posto}: id «${v.id}» non è ${pre}-001…`);
   if (visti.has(v.id)) errori.push(`${posto}: id ${v.id} doppio (già in ${visti.get(v.id)})`); else visti.set(v.id, posto);
   if (v.famiglia !== fam && v.famiglia !== pre) errori.push(`${posto} ${v.id}: famiglia «${v.famiglia}», il file dice «${fam}» (${pre})`);

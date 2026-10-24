@@ -72,20 +72,21 @@ async function giro(app, area, cfg, console_) {
     const uguali = (a, b) => a && b && a.equals(b);
     const manca = (criterio, valore) => reg.difetti.push({ criterio, dove: el.dove, valore, quando: el.dove, foto: el.foto.at(-1) });
     await pagina.mouse.move(0, 0, { steps: 2 }); await pausa(200);
-    const riposo = await pezzo();
+    const asp = () => loc.evaluate((e) => window.__bt.aspetto(e)).catch(() => null);
+    const riposo = await pezzo(), aRiposo = await asp();
     const ok = await loc.hover({ timeout: 2000 }).then(() => true, (e) => (el.errore = e.message.split('\n')[0], false));
     // un solo spostamento non sempre accende :hover (visto sulle righe della barra, #522): si entra con qualche passo, come una mano vera
     if (ok && box) await pagina.mouse.move(box.x + box.width / 2, box.y + box.height / 2 + 1, { steps: 4 });
     if (ok) await forza(i, ['hover']);
     await pausa(250);
-    const sopra = await pezzo(); el.foto.push(await foto(`el${i}-hover`));
-    if (ok && !disab && uguali(riposo, sopra)) manca('HOVER', 'nessun cambio visivo col mouse sopra');
+    const sopra = await pezzo(), aSopra = await asp(); el.foto.push(await foto(`el${i}-hover`));
+    if (ok && !disab && uguali(riposo, sopra) && aRiposo === aSopra) manca('HOVER', 'nessun cambio visivo col mouse sopra');
     const campione = VIDEO ? pagina.evaluate(() => window.__bt.campiona(700)).catch(() => null) : null;
     if (ok) {
       await pagina.mouse.down(); await forza(i, ['hover', 'active']); await pausa(80);
-      const premuto = await pezzo(); el.foto.push(await foto(`el${i}-premuto`));
+      const premuto = await pezzo(), aPremuto = await asp(); el.foto.push(await foto(`el${i}-premuto`));
       await pagina.mouse.up(); await forza(i, []);
-      if (!disab && tipo !== 'campo' && uguali(sopra, premuto)) manca('PREMUTO', 'nessuno stato premuto');
+      if (!disab && tipo !== 'campo' && uguali(sopra, premuto) && aSopra === aPremuto) manca('PREMUTO', 'nessuno stato premuto');
     }
     if (campione) { const c = await campione; if (c) { reg.movimenti.push({ dove: el.dove, animazioni: riassunto(c) }); difettiMovimento(c, { ridotto: cfg.ridotto, dove: el.dove }).forEach((d) => reg.difetti.push({ ...d, quando: el.dove })); } }
     else await pausa(350);

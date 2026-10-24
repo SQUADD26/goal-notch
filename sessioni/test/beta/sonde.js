@@ -12,6 +12,8 @@
     const t = testo(e);
     return e.tagName.toLowerCase() + c + (t ? ` «${t}»` : '');
   };
+  // aspetto calcolato di un pezzo e dei suoi figli: seconda prova degli stati, accanto ai pixel della foto
+  const aspetto = (x) => [x, ...x.querySelectorAll('*')].map((y) => { const z = getComputedStyle(y); return z.color + z.backgroundColor + z.opacity + z.borderTopColor + z.boxShadow + z.transform + z.fill + z.stroke; }).join();
   const vis = (e) => { const r = e.getBoundingClientRect(), s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && +s.opacity > 0; };
   const proprio = (e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
   const dentro = (a, b, m = 1) => a.left >= b.left - m && a.top >= b.top - m && a.right <= b.right + m && a.bottom <= b.bottom + m;
@@ -55,7 +57,6 @@
       let scorre = false;
       for (let p = e.parentElement; p && p !== document.body; p = p.parentElement) if (/auto|scroll|hidden|clip/.test(getComputedStyle(p).overflow)) { scorre = true; break; }
       if (e.disabled || e.getAttribute('aria-disabled') === 'true') {
-        const aspetto = (x) => [x, ...x.querySelectorAll('*')].map((y) => { const z = getComputedStyle(y); return z.color + z.backgroundColor + z.opacity + z.borderTopColor + z.fill + z.stroke; }).join();
         const gemello = [...document.querySelectorAll(`${radice} :is(${CLIC})`)].find((o) => o !== e && o.className === e.className && !o.disabled && o.getAttribute('aria-disabled') !== 'true' && vis(o));
         if (gemello && aspetto(gemello) === aspetto(e)) una('STATO', e, `disabilitato uguale all'attivo ${sel(gemello)}`);
       }
@@ -133,7 +134,7 @@
   }
 
   window.__bt = {
-    SOPRA, LAYOUT: LAYOUT.source, sel, statiche, anello, campiona,
+    SOPRA, LAYOUT: LAYOUT.source, sel, aspetto, statiche, anello, campiona,
     cliccabili(radice) {
       const visti = new Set();
       return [...document.querySelectorAll(`${radice} :is(${CLIC})`)].filter(vis).filter((e) => !e.closest(SOPRA)).filter((e) => {
