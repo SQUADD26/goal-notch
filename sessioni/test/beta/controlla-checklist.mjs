@@ -11,6 +11,7 @@ FAMIGLIE['cerca-intestazione'] = 'CIN';
 FAMIGLIE['cerca-dialoghi'] = 'CDI';
 FAMIGLIE['cerca-account'] = 'CAC';
 FAMIGLIE['cerca-larghezze'] = 'CLA';
+FAMIGLIE['cerca-stati-turno'] = 'CST';
 const GRAVITA = ['bloccante', 'alta', 'media', 'bassa'], PROVA = ['auto', 'occhio', 'fotogrammi'];
 FAMIGLIE['cerca-tastiera'] = 'CTS';
 FAMIGLIE['cerca-icona-viadalmac'] = 'CIV';
